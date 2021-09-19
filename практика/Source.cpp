@@ -25,7 +25,7 @@ public:
 	float y;
 };
 
-class Section
+class Section//класс отрезка
 {
 public:
 	Section()
