@@ -7,20 +7,19 @@ using namespace std;
 class Point//класс точки
 {
 public:
-
-
-	Point(float a = 0, float b = 0)
+	Point(float a = 0, float b = 0)//конструктор инициализирующий координаты
 	{
 		x = a;
 		y = b;
 	}
 	~Point() {};
-	inline void Set_x(float xx) { x = xx; }
-	inline void Set_y(float yy) { y = yy; }
+	inline void Set_x(float xx) { x = xx; }// функция установки координаты по х 
+	inline void Set_y(float yy) { y = yy; }// функция установки координаты по y 
 
 private:
 protected:
 public:
+	vector <Point> neighbors[4];//массив соседей точки [0] левый сосед [1] верхний [2] правый [3] нижний
 	float x;
 	float y;
 };
@@ -28,7 +27,7 @@ public:
 class Section//класс отрезка
 {
 public:
-	Section()
+	Section()// пустой конструктор
 	{
 		a.Set_x(0);
 		a.Set_y(0);
@@ -36,13 +35,13 @@ public:
 		b.Set_y(0);
 		length = 0;
 	}
-	Section(Point aa, Point bb)
+	Section(Point aa, Point bb)// конструктор по точкам
 	{
 		a = aa;
 		b = bb;
 		init_length();
 	}
-	inline void init_length()
+	inline void init_length()//функция установки длины отрезка
 	{
 		length = sqrt(pow((a.x - b.x), float(2)) + pow((a.y - b.y), float(2)));
 	}
@@ -51,22 +50,23 @@ public:
 public:
 	Point a;
 	Point b;
-	float length;
+	float length;// длина отрезка
 };
 
-class Sqad
+class Sqad//класс квадрата
 {
 public:
 
-	Sqad(Point* mass) //
+	Sqad(Point* mass) //конструктор квадрата по массиву точек
 	{
 		for (int i = 1; i < 4; i++)
 		{
 			points[i] = mass[i];
 		}
 		init_sections();
+		init_center();
 	}
-	Sqad(Point first, Point second, Point third, Point fourth) //
+	Sqad(Point first, Point second, Point third, Point fourth) //конструктор по 4 точкам
 	{
 		points[0] = first;
 		points[1] = second;
@@ -103,10 +103,10 @@ public:
 	float sidelength;
 };
 
-class Bigpart
+class Bigpart//класс прямоугольника
 {
 public:
-	Bigpart(Point a, Point b) //
+	Bigpart(Point a, Point b) //конструктор прямоугольника по нижней левой точке и верхней правой точке
 	{
 		points[0] = a;
 		points[1] = Point(a.x, b.y);
@@ -116,8 +116,18 @@ public:
 		init_length();
 		init_point_matrix();
 	}
+	Bigpart(Point a, Point b, Point c, Point d) //конструктор прямоугольника по 4 точкам
+	{
+		points[0] = a;
+		points[1] = b;
+		points[2] = c;
+		points[3] = d;
+		init_sections();
+		init_length();
+		init_point_matrix();
+	}
 
-	void init_sections()
+	void init_sections()// заполнение массивов отрезков
 	{
 		sections[0] = Section(points[0], points[1]);
 		sections[1] = Section(points[1], points[2]);
@@ -125,14 +135,14 @@ public:
 		sections[3] = Section(points[3], points[1]);
 	}
 
-	void init_length()
+	void init_length()//определение длин сторон прямоугольника
 	{
 		verticallength = sections[0].length;
 		horizontallength = sections[1].length;
 
 	}
 
-	void init_point_matrix()
+	void init_point_matrix()//функция начального заполнения матрицы с точками прямоугольника
 	{
 		point_matrix.resize(2);
 		point_matrix[0].resize(2);
@@ -141,11 +151,11 @@ public:
 		point_matrix[0][1] = points[2];
 		point_matrix[1][0] = points[0];
 		point_matrix[1][1] = points[3];
-
-
 	}
 
-	void divide_self_points(int number)
+
+
+	void divide_self_points(int number)// функция разделения сторон прямоугольника и получения новой матрицы с точками
 	{
 		vector<Point>::iterator it;
 		float step = sqrt(pow((point_matrix[0][1].x - point_matrix[0][0].x), float(2)) + pow((point_matrix[0][1].y - point_matrix[0][0].y), float(2)))/number;
@@ -176,19 +186,46 @@ public:
 					{
 						point_matrix[i * number + k][j] = Point(point_matrix[i][j].x, point_matrix[(i)*number][j].y - step * k);
 					}
-					//float incr = step * k;
-					//point_matrix[i].insert(it + j * number + k, Point((point_matrix[i][j * number].x + incr), point_matrix[i][j].y));
 				}
 		}
+		init_allcells();
 	}
-
-	void print_point_matrix()
+	void init_allcells()//функция заполнения массива клеток по масиву точек 123
+	{
+		allcells.clear();
+		for (int i = 0; i < point_matrix.size()-1; i++)
+		{
+			for (int j = 0; j < point_matrix[i].size()-1; j++)
+			{
+				allcells.push_back(Bigpart(point_matrix[i + 1][j], point_matrix[i][j], point_matrix[i][j + 1], point_matrix[i + 1][j + 1]));
+			}
+		}
+	}
+	void print_point_matrix()// печатает матрицу точек прямоугольника
 	{
 		for (int i = 0; i < point_matrix.size(); i++)
 		{
 			for (int j = 0; j < point_matrix[i].size(); j++)
 			{
 				cout << point_matrix[i][j].x << "." << point_matrix[i][j].y << " ";
+			}
+			cout << endl;
+		}
+	}
+	void print_allcells()// рекурсивно печатает все ячейки
+	{
+		if (allcells.size() > 0)
+		{
+			for (int i = 0; i < allcells.size(); i++)
+			{
+				if (allcells[i].point_matrix.size() > 2)
+				{
+					allcells[i].print_allcells();
+				}
+				else
+				{
+					allcells[i].print_point_matrix();
+				}
 			}
 			cout << endl;
 		}
@@ -201,9 +238,8 @@ public:
 	Section sections[4];
 	Point points[4];
 	vector<Section> allsections;
-	vector<Sqad> allquads;
+	vector<Bigpart> allcells;
 	vector<vector<Point>> point_matrix;
-	//vector<vector<Bigpart>> point_matrixa;
 	float verticallength;
 	float horizontallength;
 };
@@ -213,13 +249,10 @@ int main()
 	Point a(0, 0);
 	Point b(100, 100);
 	Bigpart pole(a, b);
-	pole.print_point_matrix();
 	pole.divide_self_points(2);
-	pole.print_point_matrix();
-	pole.divide_self_points(2);
-	pole.print_point_matrix();
-	pole.divide_self_points(3);
-	pole.print_point_matrix();
+	pole.allcells[0].divide_self_points(2);
+//	pole.print_point_matrix();
+	pole.print_allcells();
 	system("pause");
 	return 0;
 }
