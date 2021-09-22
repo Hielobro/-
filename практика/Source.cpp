@@ -12,10 +12,18 @@ public:
 		x = a;
 		y = b;
 	}
+	bool operator== (Point b)
+	{
+		if (this->x == b.x && this->y == b.y)
+		{
+			return true;
+		}
+		else return false;
+	}
 	~Point() {};
 	inline void Set_x(float xx) { x = xx; }// функция установки координаты по х 
 	inline void Set_y(float yy) { y = yy; }// функция установки координаты по y 
-
+	inline void print_point() {cout << x << "." << y;}
 private:
 protected:
 public:
@@ -115,6 +123,7 @@ public:
 		init_sections();
 		init_length();
 		init_point_matrix();
+		is_divided = false;
 	}
 	Bigpart(Point a, Point b, Point c, Point d) //конструктор прямоугольника по 4 точкам
 	{
@@ -125,6 +134,7 @@ public:
 		init_sections();
 		init_length();
 		init_point_matrix();
+		is_divided = false;
 	}
 
 	void init_sections()// заполнение массивов отрезков
@@ -171,6 +181,7 @@ public:
 				point_matrix[i].insert(it + j * number + k, Point((point_matrix[i][j*number].x + incr), point_matrix[i][j].y));
 				}
 			}
+			
 		}
 		step = sqrt(pow((point_matrix[1][0].x - point_matrix[0][0].x), float(2)) + pow((point_matrix[1][0].y - point_matrix[0][0].y), float(2))) / number;
 		int size_before = point_matrix.size();
@@ -189,6 +200,7 @@ public:
 				}
 		}
 		init_allcells();
+		is_divided = true;
 	}
 	void init_allcells()//функция заполнения массива клеток по масиву точек 123
 	{
@@ -230,6 +242,30 @@ public:
 			cout << endl;
 		}
 	}
+
+	void get_cells_for_calculation(vector <Point> &mass)//заполняет массив точек без повторений для обработки
+	{
+		
+		if (is_divided)
+		{
+			for (int i = 0; i < allcells.size(); i++)
+			{
+				allcells[i].get_cells_for_calculation(mass);
+			}
+		}
+			else
+			{
+				for (int i = 0; i < 4; i++)
+				{
+					if (find(mass.begin(), mass.end(), points[i]) == mass.end()) {
+						mass.push_back(points[i]);
+					}
+				}
+
+			}
+		
+	}
+
 	~Bigpart() {};
 
 private:
@@ -242,6 +278,7 @@ public:
 	vector<vector<Point>> point_matrix;
 	float verticallength;
 	float horizontallength;
+	bool is_divided;
 };
 
 int main()
@@ -253,6 +290,13 @@ int main()
 	pole.allcells[0].divide_self_points(2);
 //	pole.print_point_matrix();
 	pole.print_allcells();
+	vector <Point> calc;
+	pole.get_cells_for_calculation(calc);
+	for (int i = 0; i < calc.size(); i++)
+	{
+		calc[i].print_point();
+		cout << " ";
+	}
 	system("pause");
 	return 0;
 }
