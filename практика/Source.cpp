@@ -27,7 +27,7 @@ public:
 private:
 protected:
 public:
-	vector <Point> neighbors[4];//массив соседей точки [0] левый сосед [1] верхний [2] правый [3] нижний
+//	vector <Point> neighbors[4];//массив соседей точки [0] левый сосед [1] верхний [2] правый [3] нижний
 	float x;
 	float y;
 };
@@ -120,8 +120,9 @@ public:
 		points[1] = Point(a.x, b.y);
 		points[2] = b;
 		points[3] = Point(b.x, a.y);
-		init_sections();
+		//init_sections();
 		init_length();
+		init_center();
 		init_point_matrix();
 		is_divided = false;
 	}
@@ -131,12 +132,23 @@ public:
 		points[1] = b;
 		points[2] = c;
 		points[3] = d;
-		init_sections();
+		//init_sections();
 		init_length();
+		init_center();
 		init_point_matrix();
 		is_divided = false;
 	}
 
+	void init_center()
+	{
+		float x;
+		float y;
+		x = points[0].x + (horizontallength / 2);
+		y = points[0].y + (verticallength / 2);
+		center = Point(x, y);
+		eps = return_l(points[0], center);
+	}
+	/*
 	void init_sections()// заполнение массивов отрезков
 	{
 		sections[0] = Section(points[0], points[1]);
@@ -144,14 +156,14 @@ public:
 		sections[2] = Section(points[2], points[3]);
 		sections[3] = Section(points[3], points[1]);
 	}
-
+*/	
+	inline float  return_l(Point a, Point b){return sqrt(pow((a.x - b.x), float(2)) + pow((a.y - b.y), float(2)));}
 	void init_length()//определение длин сторон прямоугольника
 	{
-		verticallength = sections[0].length;
-		horizontallength = sections[1].length;
-
+		verticallength = return_l(points[0], points[1]); //sections[0].length;
+		horizontallength = return_l(points[1], points[2]); //sections[0].length; // sections[1].length;
 	}
-
+	
 	void init_point_matrix()//функция начального заполнения матрицы с точками прямоугольника
 	{
 		point_matrix.resize(2);
@@ -271,32 +283,49 @@ public:
 private:
 protected:
 public:
-	Section sections[4];
+//	Section sections[4];
 	Point points[4];
-	vector<Section> allsections;
+//	vector<Section> allsections;
 	vector<Bigpart> allcells;
 	vector<vector<Point>> point_matrix;
 	float verticallength;
 	float horizontallength;
+	float eps;
+	Point center;
 	bool is_divided;
 };
+float get_value_circle(Bigpart a, Point b, float radius)//функция вохвоащающая расстояние до окружности
+{
+	// (x – a)2 + (y – b)2 = R2
+	float rez = sqrt(fabs(pow((a.center.x - b.x), float(2)) + pow((a.center.y - b.y), float(2)) - pow(radius, float(2))));
+	return rez;
+}
+void dynamic_divide(Bigpart& a, Point &b,float radius, float min)// функция динамического разбиения квадрата незавершенная, считает неверно
+{
+	float val = 0;
+	if (a.eps > 2*min)
+	{
+		val = get_value_circle(a, b, radius);
+		if (val <= a.eps)//(get_value_circle(a, b, radius) == 1)
+		{
+			a.divide_self_points(2);
+			for (int i = 0; i < a.allcells.size(); i++)
+			{
+				dynamic_divide(a.allcells[i], b, radius, min);
+			}
+		}
+	}
+}
+
+
 
 int main()
 {
 	Point a(0, 0);
 	Point b(100, 100);
 	Bigpart pole(a, b);
-	pole.divide_self_points(2);
-	pole.allcells[0].divide_self_points(2);
-//	pole.print_point_matrix();
-	pole.print_allcells();
-	vector <Point> calc;
-	pole.get_cells_for_calculation(calc);
-	for (int i = 0; i < calc.size(); i++)
-	{
-		calc[i].print_point();
-		cout << " ";
-	}
+	Point center = Point(50, 50);
+	dynamic_divide(pole, center, 50., 3.);
 	system("pause");
 	return 0;
 }
